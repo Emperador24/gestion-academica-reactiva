@@ -48,6 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Mono<ResponseEntity<ErrorResponse>> handleGenericException(
             Exception ex, ServerWebExchange exchange) {
+        ex.printStackTrace(); // Para debug
         ErrorResponse error = new ErrorResponse(
             "Internal Server Error",
             ex.getMessage() != null ? ex.getMessage() : "Ha ocurrido un error inesperado",

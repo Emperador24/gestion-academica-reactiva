@@ -1,8 +1,6 @@
-// ========== MateriaService.java ==========
 package co.edu.javeriana.gestionacademica.service;
 
 import co.edu.javeriana.gestionacademica.dto.MateriaConEstudiantesDTO;
-import co.edu.javeriana.gestionacademica.model.Estudiante;
 import co.edu.javeriana.gestionacademica.model.Materia;
 import co.edu.javeriana.gestionacademica.repository.EstudianteMateriaRepository;
 import co.edu.javeriana.gestionacademica.repository.EstudianteRepository;
@@ -12,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +28,7 @@ public class MateriaService {
                     return Mono.error(new IllegalArgumentException(
                         "Ya existe una materia con el nombre: " + materia.getNombre()));
                 }
+                materia.setCreatedAt(LocalDateTime.now());
                 return materiaRepository.save(materia);
             });
     }

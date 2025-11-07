@@ -1,9 +1,7 @@
-// ========== NotaService.java ==========
 package co.edu.javeriana.gestionacademica.service;
 
 import co.edu.javeriana.gestionacademica.dto.NotaAcumuladaDTO;
 import co.edu.javeriana.gestionacademica.dto.NotaConDetallesDTO;
-import co.edu.javeriana.gestionacademica.model.EstudianteMateria;
 import co.edu.javeriana.gestionacademica.model.Nota;
 import co.edu.javeriana.gestionacademica.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -141,6 +140,7 @@ public class NotaService {
         }
         
         return sumaPorcentajes
+            .defaultIfEmpty(0)
             .map(suma -> suma + nuevoPorcentaje)
             .flatMap(total -> {
                 if (total > 100) {
@@ -153,4 +153,3 @@ public class NotaService {
             });
     }
 }
-

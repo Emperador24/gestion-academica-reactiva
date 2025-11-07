@@ -1,4 +1,3 @@
-// ========== EstudianteService.java ==========
 package co.edu.javeriana.gestionacademica.service;
 
 import co.edu.javeriana.gestionacademica.dto.EstudianteConMateriasDTO;
@@ -11,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class EstudianteService {
                             return Mono.error(new IllegalArgumentException(
                                 "Ya existe un estudiante con el código: " + estudiante.getCodigo()));
                         }
+                        estudiante.setCreatedAt(LocalDateTime.now());
                         return estudianteRepository.save(estudiante);
                     });
             });
