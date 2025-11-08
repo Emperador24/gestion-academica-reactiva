@@ -1,11 +1,7 @@
--- Eliminar tablas si existen
-DROP TABLE IF EXISTS notas CASCADE;
-DROP TABLE IF EXISTS estudiante_materia CASCADE;
-DROP TABLE IF EXISTS estudiantes CASCADE;
-DROP TABLE IF EXISTS materias CASCADE;
+-- Crear tablas solo si NO existen (no borra datos)
 
 -- Tabla de Materias
-CREATE TABLE materias (
+CREATE TABLE IF NOT EXISTS materias (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL UNIQUE,
     creditos INTEGER NOT NULL CHECK (creditos > 0),
@@ -13,7 +9,7 @@ CREATE TABLE materias (
 );
 
 -- Tabla de Estudiantes
-CREATE TABLE estudiantes (
+CREATE TABLE IF NOT EXISTS estudiantes (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
     apellido VARCHAR(255) NOT NULL,
@@ -23,7 +19,7 @@ CREATE TABLE estudiantes (
 );
 
 -- Tabla intermedia Estudiante-Materia
-CREATE TABLE estudiante_materia (
+CREATE TABLE IF NOT EXISTS estudiante_materia (
     id SERIAL PRIMARY KEY,
     estudiante_id INTEGER NOT NULL REFERENCES estudiantes(id) ON DELETE CASCADE,
     materia_id INTEGER NOT NULL REFERENCES materias(id) ON DELETE CASCADE,
@@ -32,7 +28,7 @@ CREATE TABLE estudiante_materia (
 );
 
 -- Tabla de Notas
-CREATE TABLE notas (
+CREATE TABLE IF NOT EXISTS notas (
     id SERIAL PRIMARY KEY,
     estudiante_materia_id INTEGER NOT NULL REFERENCES estudiante_materia(id) ON DELETE CASCADE,
     valor DECIMAL(3,2) NOT NULL CHECK (valor >= 0.0 AND valor <= 5.0),
@@ -42,7 +38,7 @@ CREATE TABLE notas (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices para mejorar el rendimiento
-CREATE INDEX idx_estudiante_materia_estudiante ON estudiante_materia(estudiante_id);
-CREATE INDEX idx_estudiante_materia_materia ON estudiante_materia(materia_id);
-CREATE INDEX idx_notas_estudiante_materia ON notas(estudiante_materia_id);
+-- Índices para mejorar el rendimiento (solo si no existen)
+CREATE INDEX IF NOT EXISTS idx_estudiante_materia_estudiante ON estudiante_materia(estudiante_id);
+CREATE INDEX IF NOT EXISTS idx_estudiante_materia_materia ON estudiante_materia(materia_id);
+CREATE INDEX IF NOT EXISTS idx_notas_estudiante_materia ON notas(estudiante_materia_id);

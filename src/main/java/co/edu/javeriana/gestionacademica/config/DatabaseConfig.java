@@ -1,6 +1,7 @@
 package co.edu.javeriana.gestionacademica.config;
 
 import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -12,7 +13,9 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 @EnableR2dbcAuditing
 public class DatabaseConfig {
 
+    // Solo se ejecutará si la propiedad está habilitada
     @Bean
+    @ConditionalOnProperty(name = "spring.r2dbc.initialization-mode", havingValue = "always")
     public ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
         ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
         initializer.setConnectionFactory(connectionFactory);
