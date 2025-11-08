@@ -41,6 +41,12 @@ public class InscripcionService {
             );
     }
 
+    public Mono<EstudianteMateria> obtenerRelacion(Long estudianteId, Long materiaId) {
+        return estudianteMateriaRepository.findByEstudianteIdAndMateriaId(estudianteId, materiaId)
+            .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                "El estudiante no está inscrito en esta materia")));
+    }
+
     @Transactional
     public Mono<Void> desinscribir(Long estudianteId, Long materiaId) {
         return estudianteMateriaRepository.findByEstudianteIdAndMateriaId(estudianteId, materiaId)

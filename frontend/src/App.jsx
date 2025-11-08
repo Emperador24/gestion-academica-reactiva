@@ -107,7 +107,7 @@ const App = () => {
   };
 
   const eliminarMateria = async (id) => {
-    if (!confirm('¿Está seguro de eliminar esta materia?')) return;
+    if (!window.confirm('¿Está seguro de eliminar esta materia?')) return;
     try {
       await fetch(`${API_URL}/materias/${id}`, { method: 'DELETE' });
       showSuccess('Materia eliminada exitosamente');
@@ -165,7 +165,7 @@ const App = () => {
   };
 
   const eliminarEstudiante = async (id) => {
-    if (!confirm('¿Está seguro de eliminar este estudiante?')) return;
+    if (!window.confirm('¿Está seguro de eliminar este estudiante?')) return;
     try {
       await fetch(`${API_URL}/estudiantes/${id}`, { method: 'DELETE' });
       showSuccess('Estudiante eliminado exitosamente');
@@ -204,18 +204,42 @@ const App = () => {
     try {
       const response = await fetch(`${API_URL}/materias/${materiaId}/estudiantes`);
       const data = await response.json();
-      setSelectedMateria(data);
+      
+      // Obtener los IDs de estudiante_materia para cada estudiante
+      const estudiantesConRelacion = await Promise.all(
+        data.estudiantes.map(async (est) => {
+          try {
+            const relResponse = await fetch(`${API_URL}/inscripciones?estudianteId=${est.id}&materiaId=${materiaId}`);
+            if (relResponse.ok) {
+              const relData = await relResponse.json();
+              return { ...est, estudianteMateriaId: relData.id };
+            }
+            return est;
+          } catch {
+            return est;
+          }
+        })
+      );
+      
+      setSelectedMateria({ ...data, estudiantes: estudiantesConRelacion });
     } catch (err) {
       showError('Error al cargar estudiantes de la materia');
     }
   };
 
-  const verNotasEstudiante = async (estudianteId, materiaId) => {
+  const verNotasEstudiante = async (estudianteId, materiaId, estudianteMateriaId) => {
     try {
       const response = await fetch(`${API_URL}/notas/estudiante/${estudianteId}/materia/${materiaId}/acumulada`);
       const data = await response.json();
       setNotaAcumulada(data);
-      setSelectedEstudiante({ estudianteId, materiaId });
+      setSelectedEstudiante({ estudianteId, materiaId, estudianteMateriaId });
+      setNotaForm({ 
+        valor: '', 
+        porcentaje: '', 
+        descripcion: '', 
+        estudianteMateriaId: estudianteMateriaId.toString() 
+      });
+      setActiveTab('notas');
     } catch (err) {
       showError('Error al cargar notas del estudiante');
     }
@@ -240,9 +264,18 @@ const App = () => {
         throw new Error(error.message);
       }
       showSuccess('Nota creada exitosamente');
-      setNotaForm({ valor: '', porcentaje: '', descripcion: '', estudianteMateriaId: '' });
+      setNotaForm({ 
+        valor: '', 
+        porcentaje: '', 
+        descripcion: '', 
+        estudianteMateriaId: selectedEstudiante?.estudianteMateriaId.toString() || '' 
+      });
       if (selectedEstudiante) {
-        verNotasEstudiante(selectedEstudiante.estudianteId, selectedEstudiante.materiaId);
+        verNotasEstudiante(
+          selectedEstudiante.estudianteId, 
+          selectedEstudiante.materiaId, 
+          selectedEstudiante.estudianteMateriaId
+        );
       }
     } catch (err) {
       showError(err.message);
@@ -252,12 +285,16 @@ const App = () => {
   };
 
   const eliminarNota = async (id) => {
-    if (!confirm('¿Está seguro de eliminar esta nota?')) return;
+    if (!window.confirm('¿Está seguro de eliminar esta nota?')) return;
     try {
       await fetch(`${API_URL}/notas/${id}`, { method: 'DELETE' });
       showSuccess('Nota eliminada exitosamente');
       if (selectedEstudiante) {
-        verNotasEstudiante(selectedEstudiante.estudianteId, selectedEstudiante.materiaId);
+        verNotasEstudiante(
+          selectedEstudiante.estudianteId, 
+          selectedEstudiante.materiaId, 
+          selectedEstudiante.estudianteMateriaId
+        );
       }
     } catch (err) {
       showError('Error al eliminar nota');
@@ -433,7 +470,7 @@ const App = () => {
                       <p className="text-sm text-gray-600">{estudiante.email}</p>
                       <p className="text-sm text-gray-600">Código: {estudiante.codigo}</p>
                       <button
-                        onClick={() => verNotasEstudiante(estudiante.id, selectedMateria.id)}
+                        onClick={() => verNotasEstudiante(estudiante.id, selectedMateria.id, estudiante.estudianteMateriaId)}
                         className="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1"
                       >
                         <TrendingUp size={14} />
@@ -618,7 +655,7 @@ const App = () => {
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-xl font-bold mb-4">Registrar Nueva Nota</h2>
                   <form onSubmit={crearNota}>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">Valor (0.0 - 5.0)</label>
                         <input
@@ -644,16 +681,6 @@ const App = () => {
                           required
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Estudiante-Materia ID</label>
-                        <input
-                          type="number"
-                          value={notaForm.estudianteMateriaId}
-                          onChange={(e) => setNotaForm({...notaForm, estudianteMateriaId: e.target.value})}
-                          className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                          required
-                        />
-                      </div>
                     </div>
                     <div className="mb-4">
                       <label className="block text-sm font-medium mb-2">Descripción</label>
@@ -662,8 +689,10 @@ const App = () => {
                         value={notaForm.descripcion}
                         onChange={(e) => setNotaForm({...notaForm, descripcion: e.target.value})}
                         className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Ej: Parcial 1, Quiz, Taller, etc."
                       />
                     </div>
+                    <input type="hidden" value={notaForm.estudianteMateriaId} />
                     <button
                       type="submit"
                       disabled={loading}

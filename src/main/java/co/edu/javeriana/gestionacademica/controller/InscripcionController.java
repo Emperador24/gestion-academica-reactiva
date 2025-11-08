@@ -25,6 +25,13 @@ public class InscripcionController {
         );
     }
 
+    @GetMapping
+    public Mono<EstudianteMateria> obtenerRelacion(
+            @RequestParam Long estudianteId,
+            @RequestParam Long materiaId) {
+        return inscripcionService.obtenerRelacion(estudianteId, materiaId);
+    }
+
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> desinscribir(@Valid @RequestBody InscripcionDTO inscripcion) {
