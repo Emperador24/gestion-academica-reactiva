@@ -22,12 +22,14 @@ public class EstudianteService {
 
     @Transactional
     public Mono<Estudiante> crear(Estudiante estudiante) {
+        // Validar email único
         return estudianteRepository.existsByEmail(estudiante.getEmail())
             .flatMap(existsEmail -> {
                 if (existsEmail) {
                     return Mono.error(new IllegalArgumentException(
                         "Ya existe un estudiante con el email: " + estudiante.getEmail()));
                 }
+                // Validar código único
                 return estudianteRepository.existsByCodigo(estudiante.getCodigo())
                     .flatMap(existsCodigo -> {
                         if (existsCodigo) {
@@ -54,21 +56,30 @@ public class EstudianteService {
         return estudianteRepository.findById(id)
             .switchIfEmpty(Mono.error(new IllegalArgumentException("Estudiante no encontrado")))
             .flatMap(estudianteExistente -> {
+                // Validar email solo si cambió
                 Mono<Boolean> validacionEmail = Mono.just(true);
-                Mono<Boolean> validacionCodigo = Mono.just(true);
-                
                 if (!estudianteExistente.getEmail().equals(estudiante.getEmail())) {
                     validacionEmail = estudianteRepository.existsByEmail(estudiante.getEmail())
-                        .flatMap(exists -> exists ? 
-                            Mono.error(new IllegalArgumentException("El email ya está en uso")) : 
-                            Mono.just(false));
+                        .flatMap(exists -> {
+                            if (exists) {
+                                return Mono.error(new IllegalArgumentException(
+                                    "Ya existe un estudiante con el email: " + estudiante.getEmail()));
+                            }
+                            return Mono.just(true);
+                        });
                 }
                 
+                // Validar código solo si cambió
+                Mono<Boolean> validacionCodigo = Mono.just(true);
                 if (!estudianteExistente.getCodigo().equals(estudiante.getCodigo())) {
                     validacionCodigo = estudianteRepository.existsByCodigo(estudiante.getCodigo())
-                        .flatMap(exists -> exists ? 
-                            Mono.error(new IllegalArgumentException("El código ya está en uso")) : 
-                            Mono.just(false));
+                        .flatMap(exists -> {
+                            if (exists) {
+                                return Mono.error(new IllegalArgumentException(
+                                    "Ya existe un estudiante con el código: " + estudiante.getCodigo()));
+                            }
+                            return Mono.just(true);
+                        });
                 }
                 
                 return Mono.zip(validacionEmail, validacionCodigo)
